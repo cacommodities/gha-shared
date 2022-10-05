@@ -30,7 +30,7 @@ runs:
                     "type": "header",
                     "text": {
                       "type": "plain_text",
-                      "text": "${{ github.event.repository.name }} (${{ input.version }}) - build succeeded",
+                      "text": "${{ github.event.repository.name }} (${{ inputs.version }}) - build succeeded",
                       "emoji": true
                     }
                   },
