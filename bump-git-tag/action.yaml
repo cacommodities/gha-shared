@@ -34,8 +34,8 @@ runs:
         fi
         VERSION="${{ inputs.major_minor_version }}.$PATCH_VERSION"
 
-        git config user.name ${{ inputs.tag_bump_git_user_name }}
-        git config user.email ${{ inputs.tag_bump_git_user_email }}
+        git config user.name "${{ inputs.tag_bump_git_user_name }}"
+        git config user.email "${{ inputs.tag_bump_git_user_email }}"
 
         git tag -a $VERSION -m "Automatic version bump"
         git push origin $VERSION
