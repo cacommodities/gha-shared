@@ -44,7 +44,7 @@ jobs:
           docker build --cache-from ${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:latest .
 
       - if: ${{ github.ref == inputs.production_ref }}
-        uses: ./.github/actions/bump-git-tag
+        uses: cacommodities/gha-shared/bump-git-tag@master
         id: bump-git-tag
         with:
           major_minor_version: ${{ inputs.major_minor_version }}
@@ -64,7 +64,7 @@ jobs:
           echo "### New version: ${{ steps.bump-git-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Slack notification
-        uses: ./.github/actions/slack-notification
+        uses: cacommodities/gha-shared/slack-notification@master
         with:
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
           version: ${{ steps.bump-git-tag.outputs.version }}
