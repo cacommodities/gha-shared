@@ -12,8 +12,6 @@ on:
         required: false
         type: string
 
-    secrets: inherit
-
 env:
   IMAGE_NAME: ${{ secrets.CR_URL }}/${{ github.event.repository.name }}
   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
