@@ -1,0 +1,131 @@
+name: Send slack notification
+description: Bumps patch part of the git tag
+
+inputs:
+  version:
+    description: "Version of the software"
+    required: false
+  slack_webhook_url:
+    description: "Slack webhook URL"
+    required: true
+  github_run_url:
+    description: "URL to the GitHub run"
+    required: false
+    default: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      name: Slack notification
+      if: ${{ success() }}
+      run: |
+        curl -f -d @- -H "Content-Type: application/json" "${{ inputs.slack_webhook_url }}" <<EOSLACKJSON
+          {
+            "attachments": [
+              {
+                "color": "#00FF00",
+                "blocks": [
+                  {
+                    "type": "header",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "${{ github.event.repository.name }} (${{ input.version }}) - build succeeded",
+                      "emoji": true
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Name:*\n${{ github.event.repository.name }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Triggered by:*\n${{ github.triggering_actor }}"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Version:*\n${{ input.version }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Ref:*\n${{ github.ref }}"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "<${{ inputs.github_run_url }}|View run>"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        EOSLACKJSON
+
+    - shell: bash
+      name: Slack notification failure
+      if: ${{ failure() }}
+      run: |
+        curl -f -d @- -H "Content-Type: application/json" "${{ inputs.slack_webhook_url }}" <<EOSLACKJSON
+          {
+            "attachments": [
+              {
+                "color": "#FF0000",
+                "blocks": [
+                  {
+                    "type": "header",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "${{ github.event.repository.name }} - build failed",
+                      "emoji": true
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Name:*\n${{ github.event.repository.name }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Triggered by:*\n${{ github.triggering_actor }}"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Version:*\n${{ input.version }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Ref:*\n${{ github.ref }}"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "<${{ inputs.github_run_url }}|View run>"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        EOSLACKJSON

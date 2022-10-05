@@ -1,0 +1,72 @@
+name: build-push-docker-image
+
+on:
+  workflow_call:
+    inputs:
+      major_minor_version:
+        description: "Major and minor version number, e.g. 1.2"
+        required: true
+        type: string
+      production_ref:
+        default: "refs/heads/master"
+        required: false
+        type: string
+
+    secrets: inherit
+
+env:
+  IMAGE_NAME: ${{ secrets.CR_URL }}/${{ github.event.repository.name }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+jobs:
+  build_docker_image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ECR_ACCESS_USER_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Create ECR repo if doesn't exist
+        run: aws ecr create-repository --repository-name ${{ github.event.repository.name }} || true
+
+      - name: Build image
+        run: |
+          docker pull $IMAGE_NAME:latest || true
+          docker build --cache-from ${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:latest .
+
+      - if: ${{ github.ref == inputs.production_ref }}
+        uses: ./.github/actions/bump-git-tag
+        id: bump-git-tag
+        with:
+          major_minor_version: ${{ inputs.major_minor_version }}
+          tag_bump_git_user_name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
+          tag_bump_git_user_email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
+
+      - name: Push image
+        if: ${{ github.ref == inputs.production_ref }}
+        run: |
+          docker tag ${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_NAME }}:${{ outputs.bump-git-tag.outputs.version }}
+          docker push ${{ env.IMAGE_NAME }}:${{ outputs.bump-git-tag.outputs.version }}
+          docker push ${{ env.IMAGE_NAME }}:latest
+
+      - name: Summary
+        if: ${{ github.ref == production_ref }}
+        run: |
+          echo "### New version: ${{ outputs.bump-git-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Slack notification
+        uses: ./.github/actions/slack-notification
+        with:
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          version: ${{ outputs.bump-git-tag.outputs.version }}
