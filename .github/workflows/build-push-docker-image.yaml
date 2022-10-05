@@ -54,17 +54,17 @@ jobs:
       - name: Push image
         if: ${{ github.ref == inputs.production_ref }}
         run: |
-          docker tag ${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_NAME }}:${{ outputs.bump-git-tag.outputs.version }}
-          docker push ${{ env.IMAGE_NAME }}:${{ outputs.bump-git-tag.outputs.version }}
+          docker tag ${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_NAME }}:${{ steps.bump-git-tag.outputs.version }}
+          docker push ${{ env.IMAGE_NAME }}:${{ steps.bump-git-tag.outputs.version }}
           docker push ${{ env.IMAGE_NAME }}:latest
 
       - name: Summary
-        if: ${{ github.ref == production_ref }}
+        if: ${{ github.ref == inputs.production_ref }}
         run: |
-          echo "### New version: ${{ outputs.bump-git-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "### New version: ${{ steps.bump-git-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Slack notification
         uses: ./.github/actions/slack-notification
         with:
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          version: ${{ outputs.bump-git-tag.outputs.version }}
+          version: ${{ steps.bump-git-tag.outputs.version }}
