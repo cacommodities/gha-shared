@@ -52,7 +52,7 @@ runs:
                     "fields": [
                       {
                         "type": "mrkdwn",
-                        "text": "*Version:*\n${{ input.version }}"
+                        "text": "*Version:*\n${{ inputs.version }}"
                       },
                       {
                         "type": "mrkdwn",
@@ -109,7 +109,7 @@ runs:
                     "fields": [
                       {
                         "type": "mrkdwn",
-                        "text": "*Version:*\n${{ input.version }}"
+                        "text": "*Version:*\n${{ inputs.version }}"
                       },
                       {
                         "type": "mrkdwn",
