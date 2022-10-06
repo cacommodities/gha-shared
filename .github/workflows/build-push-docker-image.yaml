@@ -73,7 +73,9 @@ jobs:
           echo "### New version: ${{ steps.bump-git-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Slack notification
+        if: ${{ success() || failure() }}
         uses: cacommodities/gha-shared/slack-notification@master
         with:
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           version: ${{ steps.bump-git-tag.outputs.version }}
+          success: ${{ success() }}
