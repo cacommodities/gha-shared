@@ -3,6 +3,16 @@ name: build-push-docker-image
 on:
   workflow_call:
     inputs:
+      dockerfile:
+        description: "Dockerfile to build"
+        default: "Dockerfile"
+        required: false
+        type: string
+      image_suffix:
+        description: "Suffix to append to the image name"
+        default: ""
+        required: false
+        type: string
       major_minor_version:
         description: "Major and minor version number, e.g. 1.2"
         required: true
@@ -13,7 +23,7 @@ on:
         type: string
 
 env:
-  IMAGE_NAME: ${{ secrets.CR_URL }}/${{ github.event.repository.name }}
+  IMAGE_NAME: ${{ secrets.CR_URL }}/${{ github.event.repository.name }}${{ inputs.image_suffix }}
   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
 jobs:
@@ -41,7 +51,7 @@ jobs:
       - name: Build image
         run: |
           docker pull $IMAGE_NAME:latest || true
-          docker build --cache-from ${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:latest .
+          docker build -f ${{ inputs.dockerfile }} --cache-from ${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:latest .
 
       - if: ${{ github.ref == inputs.production_ref }}
         uses: cacommodities/gha-shared/bump-git-tag@master
