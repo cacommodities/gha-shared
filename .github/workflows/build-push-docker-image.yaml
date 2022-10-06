@@ -1,4 +1,4 @@
-name: build-push-docker-image
+name: Build and Push Docker Image
 
 on:
   workflow_call:
@@ -8,25 +8,25 @@ on:
         default: "Dockerfile"
         required: false
         type: string
-      image_suffix:
+      image-suffix:
         description: "Suffix to append to the image name"
         default: ""
         required: false
         type: string
-      major_minor_version:
+      major-minor-version:
         description: "Major and minor version number, e.g. 1.2"
         required: true
         type: string
-      production_ref:
+      production-ref:
         default: "refs/heads/master"
         required: false
         type: string
 
 env:
-  IMAGE_NAME: ${{ secrets.CR_URL }}/${{ github.event.repository.name }}${{ inputs.image_suffix }}
+  IMAGE_NAME: ${{ secrets.CR_URL }}/${{ github.event.repository.name }}${{ inputs.image-suffix }}
 
 jobs:
-  build_docker_image:
+  build-push-docker-image:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -52,28 +52,28 @@ jobs:
           docker pull $IMAGE_NAME:latest || true
           docker build -f ${{ inputs.dockerfile }} --cache-from ${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:latest .
 
-      - if: ${{ github.ref == inputs.production_ref }}
+      - if: ${{ github.ref == inputs.production-ref }}
         uses: cacommodities/gha-shared/bump-git-tag@master
         id: bump-git-tag
         with:
-          major_minor_version: ${{ inputs.major_minor_version }}
-          tag_bump_git_user_name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
-          tag_bump_git_user_email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
+          major-minor-version: ${{ inputs.major-minor-version }}
+          tag-bump-git-user-name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
+          tag-bump-git-user-email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
 
       - name: Push image
-        if: ${{ github.ref == inputs.production_ref }}
+        if: ${{ github.ref == inputs.production-ref }}
         run: |
           docker tag ${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_NAME }}:${{ steps.bump-git-tag.outputs.version }}
           docker push ${{ env.IMAGE_NAME }}:${{ steps.bump-git-tag.outputs.version }}
           docker push ${{ env.IMAGE_NAME }}:latest
 
       - name: Summary
-        if: ${{ github.ref == inputs.production_ref }}
+        if: ${{ github.ref == inputs.production-ref }}
         run: |
           echo "### New version: ${{ steps.bump-git-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Slack notification
         uses: cacommodities/gha-shared/slack-notification@master
         with:
-          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           version: ${{ steps.bump-git-tag.outputs.version }}

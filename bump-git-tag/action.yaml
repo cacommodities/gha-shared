@@ -2,13 +2,13 @@ name: Bump git repository tag
 description: Bumps patch part of the git tag
 
 inputs:
-  major_minor_version:
+  major-minor-version:
     description: "Major and minor version number, e.g. 1.2"
     required: true
-  tag_bump_git_user_name:
+  tag-bump-git-user-name:
     description: "Git user name to use for tagging"
     required: true
-  tag_bump_git_user_email:
+  tag-bump-git-user-email:
     description: "Git user email to use for tagging"
     required: true
 
@@ -32,10 +32,10 @@ runs:
           echo "Bumping patch version"
           PATCH_VERSION=`echo $PREV_TAG | awk -F. '{OFS="."; $NF+=1; print $NF}'`
         fi
-        VERSION="${{ inputs.major_minor_version }}.$PATCH_VERSION"
+        VERSION="${{ inputs.major-minor-version }}.$PATCH_VERSION"
 
-        git config user.name "${{ inputs.tag_bump_git_user_name }}"
-        git config user.email "${{ inputs.tag_bump_git_user_email }}"
+        git config user.name "${{ inputs.tag-bump-git-user-name }}"
+        git config user.email "${{ inputs.tag-bump-git-user-email }}"
 
         git tag -a $VERSION -m "Automatic version bump"
         git push origin $VERSION

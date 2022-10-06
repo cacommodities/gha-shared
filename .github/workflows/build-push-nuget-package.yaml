@@ -3,21 +3,21 @@ name: build-push-nuget-package
 on:
   workflow_call:
     inputs:
-      proj_path:
+      proj-path:
         description: 'Path to the project to pack'
         required: true
         type: string
-      major_minor_version:
+      major-minor-version:
         description: "Major and minor version number, e.g. 1.2"
         required: true
         type: string
-      production_ref:
+      production-ref:
         default: "refs/heads/master"
         required: false
         type: string
 
 jobs:
-  build_docker_image:
+  build-push-nuget-package:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -41,27 +41,27 @@ jobs:
       - name: Test
         run: dotnet test --configuration Release --no-build
 
-      - if: ${{ github.ref == inputs.production_ref }}
+      - if: ${{ github.ref == inputs.production-ref }}
         uses: cacommodities/gha-shared/bump-git-tag@master
         id: bump-git-tag
         with:
-          major_minor_version: ${{ inputs.major_minor_version }}
-          tag_bump_git_user_name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
-          tag_bump_git_user_email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
+          major-minor-version: ${{ inputs.major-minor-version }}
+          tag-bump-git-user-name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
+          tag-bump-git-user-email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
 
       - name: Push package
-        if: ${{ github.ref == inputs.production_ref }}
+        if: ${{ github.ref == inputs.production-ref }}
         run: |
-          dotnet pack ${{ inputs.proj_path }} -c Release -p:PackageVersion=${{ steps.bump-git-tag.outputs.version }}
-          dotnet nuget push "${{ inputs.proj_path }}/bin/Release/*.nupkg" --source ${{ secrets.CODEARTIFACT_DOMAIN }}/${{ secrets.CODEARTIFACT_REPO }}
+          dotnet pack ${{ inputs.proj-path }} -c Release -p:PackageVersion=${{ steps.bump-git-tag.outputs.version }}
+          dotnet nuget push "${{ inputs.proj-path }}/bin/Release/*.nupkg" --source ${{ secrets.CODEARTIFACT_DOMAIN }}/${{ secrets.CODEARTIFACT_REPO }}
 
       - name: Summary
-        if: ${{ github.ref == inputs.production_ref }}
+        if: ${{ github.ref == inputs.production-ref }}
         run: |
           echo "### New version: ${{ steps.bump-git-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Slack notification
         uses: cacommodities/gha-shared/slack-notification@master
         with:
-          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           version: ${{ steps.bump-git-tag.outputs.version }}
