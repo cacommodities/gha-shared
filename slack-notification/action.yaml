@@ -2,7 +2,7 @@ name: Send slack notification
 description: Bumps patch part of the git tag
 
 inputs:
-  success:
+  status:
     description: "Success or fail message"
     required: true
   version:
@@ -21,7 +21,7 @@ runs:
   steps:
     - shell: bash
       name: Slack notification
-      if: ${{ inputs.success }}
+      if: ${{ inputs.status == 'success' }}
       run: |
         curl -f -d @- -H "Content-Type: application/json" "${{ inputs.slack-webhook-url }}" <<EOSLACKJSON
           {
@@ -78,7 +78,7 @@ runs:
 
     - shell: bash
       name: Slack notification failure
-      if: ${{ inputs.success }}
+      if: ${{ inputs.status == 'failure' }}
       run: |
         curl -f -d @- -H "Content-Type: application/json" "${{ inputs.slack-webhook-url }}" <<EOSLACKJSON
           {

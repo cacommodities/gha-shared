@@ -71,7 +71,7 @@ jobs:
         with:
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           version: ${{ steps.bump-git-tag.outputs.version }}
-          success: ${{ success() }}
+          status: ${{ job.status }}
 
 
 
