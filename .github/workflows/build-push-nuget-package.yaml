@@ -1,17 +1,11 @@
-name: build-push-docker-image
+name: build-push-nuget-package
 
 on:
   workflow_call:
     inputs:
-      dockerfile:
-        description: "Dockerfile to build"
-        default: "Dockerfile"
-        required: false
-        type: string
-      image_suffix:
-        description: "Suffix to append to the image name"
-        default: ""
-        required: false
+      proj_path:
+        description: 'Path to the project to pack'
+        required: true
         type: string
       major_minor_version:
         description: "Major and minor version number, e.g. 1.2"
@@ -21,9 +15,6 @@ on:
         default: "refs/heads/master"
         required: false
         type: string
-
-env:
-  IMAGE_NAME: ${{ secrets.CR_URL }}/${{ github.event.repository.name }}${{ inputs.image_suffix }}
 
 jobs:
   build_docker_image:
@@ -36,21 +27,19 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_ECR_ACCESS_USER_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_CODEARTIFACT_ACCESS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_CODEARTIFACT_ACCESS_USER_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Create ECR repo if doesn't exist
-        run: aws ecr create-repository --repository-name ${{ github.event.repository.name }} || true
-
-      - name: Build image
+      - name: Login to AWS CodeArtifact Nuget
         run: |
-          docker pull $IMAGE_NAME:latest || true
-          docker build -f ${{ inputs.dockerfile }} --cache-from ${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:latest .
+          aws codeartifact login --tool dotnet --repository ${{ secrets.CODEARTIFACT_REPO }} --domain ${{ secrets.CODEARTIFACT_DOMAIN }} --domain-owner ${{ secrets.CODEARTIFACT_DOMAIN_OWNER }} --region ${{ secrets.AWS_REGION }}
+
+      - name: Build
+        run: dotnet build --configuration Release
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build
 
       - if: ${{ github.ref == inputs.production_ref }}
         uses: cacommodities/gha-shared/bump-git-tag@master
@@ -60,12 +49,11 @@ jobs:
           tag_bump_git_user_name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
           tag_bump_git_user_email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
 
-      - name: Push image
+      - name: Push package
         if: ${{ github.ref == inputs.production_ref }}
         run: |
-          docker tag ${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_NAME }}:${{ steps.bump-git-tag.outputs.version }}
-          docker push ${{ env.IMAGE_NAME }}:${{ steps.bump-git-tag.outputs.version }}
-          docker push ${{ env.IMAGE_NAME }}:latest
+          dotnet pack ${{ env.PROJ_PATH }} -c Release -p:PackageVersion=${{ env.VERSION }}
+          dotnet nuget push "${{ env.PROJ_PATH }}/bin/Release/*.nupkg" --source ${{ secrets.CODEARTIFACT_DOMAIN }}/${{ secrets.CODEARTIFACT_REPO }}
 
       - name: Summary
         if: ${{ github.ref == inputs.production_ref }}
