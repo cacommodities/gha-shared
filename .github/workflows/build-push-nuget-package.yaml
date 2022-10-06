@@ -52,7 +52,7 @@ jobs:
       - name: Push package
         if: ${{ github.ref == inputs.production_ref }}
         run: |
-          dotnet pack ${{ env.PROJ_PATH }} -c Release -p:PackageVersion=${{ env.VERSION }}
+          dotnet pack ${{ env.PROJ_PATH }} -c Release -p:PackageVersion=${{ steps.bump-git-tag.outputs.version }}
           dotnet nuget push "${{ env.PROJ_PATH }}/bin/Release/*.nupkg" --source ${{ secrets.CODEARTIFACT_DOMAIN }}/${{ secrets.CODEARTIFACT_REPO }}
 
       - name: Summary
