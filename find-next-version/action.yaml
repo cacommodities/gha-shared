@@ -27,5 +27,4 @@ runs:
           PATCH_VERSION=`echo $PREV_TAG | awk -F. '{OFS="."; $NF+=1; print $NF}'`
         fi
         VERSION="${{ inputs.major-minor-version }}.$PATCH_VERSION"
-
-        echo "::set-output name=version::$VERSION"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
