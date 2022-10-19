@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install build dependencies
         run: python3 -m pip install wheel twine
@@ -44,12 +44,10 @@ jobs:
         run: python3 -m unittest discover -s ./tests
 
       - if: ${{ github.ref == inputs.production-ref }}
-        uses: cacommodities/gha-shared/bump-git-tag@master
-        id: bump-git-tag
+        uses: cacommodities/gha-shared/find-next-version@master
+        id: find-next-version
         with:
           major-minor-version: ${{ inputs.major-minor-version }}
-          tag-bump-git-user-name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
-          tag-bump-git-user-email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
 
       - name: Build
         run: BUILD_VERSION= python3 setup.py sdist bdist_wheel
@@ -57,21 +55,26 @@ jobs:
       - name: Push package
         if: ${{ github.ref == inputs.production-ref }}
         run: |
-          BUILD_VERSION=${{ steps.bump-git-tag.outputs.version }} python3 setup.py sdist bdist_wheel
+          BUILD_VERSION=${{ steps.find-next-version.outputs.version }} python3 setup.py sdist bdist_wheel
           python3 -m twine upload --skip-existing --repository codeartifact dist/*
+
+      - if: ${{ github.ref == inputs.production-ref }}
+        uses: cacommodities/gha-shared/push-git-tag@master
+        id: push-git-tag
+        with:
+          tag: ${{ steps.find-next-version.outputs.version }}
+          tag-bump-git-user-name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
+          tag-bump-git-user-email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
 
       - name: Summary
         if: ${{ github.ref == inputs.production-ref }}
         run: |
-          echo "### New version: ${{ steps.bump-git-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "### New version: ${{ steps.find-next-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Slack notification
         if: ${{ success() || failure() }}
         uses: cacommodities/gha-shared/slack-notification@master
         with:
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          version: ${{ steps.bump-git-tag.outputs.version }}
+          version: ${{ steps.find-next-version.outputs.version }}
           status: ${{ job.status }}
-
-
-

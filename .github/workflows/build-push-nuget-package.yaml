@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       proj-path:
-        description: 'Path to the project to pack'
+        description: "Path to the project to pack"
         required: true
         type: string
       major-minor-version:
@@ -42,28 +42,34 @@ jobs:
         run: dotnet test --configuration Release --no-build
 
       - if: ${{ github.ref == inputs.production-ref }}
-        uses: cacommodities/gha-shared/bump-git-tag@master
-        id: bump-git-tag
+        uses: cacommodities/gha-shared/find-next-version@master
+        id: find-next-version
         with:
           major-minor-version: ${{ inputs.major-minor-version }}
-          tag-bump-git-user-name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
-          tag-bump-git-user-email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
 
       - name: Push package
         if: ${{ github.ref == inputs.production-ref }}
         run: |
-          dotnet pack ${{ inputs.proj-path }} -c Release -p:PackageVersion=${{ steps.bump-git-tag.outputs.version }}
+          dotnet pack ${{ inputs.proj-path }} -c Release -p:PackageVersion=${{ steps.find-next-version.outputs.version }}
           dotnet nuget push "${{ inputs.proj-path }}/bin/Release/*.nupkg" --source ${{ secrets.CODEARTIFACT_DOMAIN }}/${{ secrets.CODEARTIFACT_REPO }}
+
+      - if: ${{ github.ref == inputs.production-ref }}
+        uses: cacommodities/gha-shared/push-git-tag@master
+        id: push-git-tag
+        with:
+          tag: ${{ steps.find-next-version.outputs.version }}
+          tag-bump-git-user-name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
+          tag-bump-git-user-email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
 
       - name: Summary
         if: ${{ github.ref == inputs.production-ref }}
         run: |
-          echo "### New version: ${{ steps.bump-git-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "### New version: ${{ steps.find-next-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Slack notification
         if: ${{ success() || failure() }}
         uses: cacommodities/gha-shared/slack-notification@master
         with:
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          version: ${{ steps.bump-git-tag.outputs.version }}
+          version: ${{ steps.find-next-version.outputs.version }}
           status: ${{ job.status }}

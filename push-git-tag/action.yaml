@@ -1,0 +1,26 @@
+name: Commits and Pushes git tag
+description: Commits and Pushes git tag
+
+inputs:
+  tag-bump-git-user-name:
+    description: "Git user name to use for tagging"
+    required: false
+  tag-bump-git-user-email:
+    description: "Git user email to use for tagging"
+    required: false
+  tag:
+    description: "Set tag"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - id: bump
+      shell: bash
+      run: |
+        git config user.name "${{ inputs.tag-bump-git-user-name }}"
+        git config user.email "${{ inputs.tag-bump-git-user-email }}"
+
+        TAG="${{ inputs.tag }}"
+        git tag -a $TAG -m "Automatic version bump"
+        git push origin $TAG

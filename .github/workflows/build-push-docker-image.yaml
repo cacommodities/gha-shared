@@ -47,6 +47,12 @@ jobs:
       - name: Create ECR repo if doesn't exist
         run: aws ecr create-repository --repository-name ${{ github.event.repository.name }} || true
 
+      - if: ${{ github.ref == inputs.production-ref }}
+        uses: cacommodities/gha-shared/find-next-version@master
+        id: find-next-version
+        with:
+          major-minor-version: ${{ inputs.major-minor-version }}
+
       - name: Build image
         run: |
           docker pull $IMAGE_NAME:latest || true
@@ -57,32 +63,33 @@ jobs:
             --build-arg AWS_CODEARTIFACT_ACCESS_USER_ACCESS_KEY_ID="${{ secrets.AWS_CODEARTIFACT_ACCESS_USER_ACCESS_KEY_ID }}" \
             --build-arg AWS_CODEARTIFACT_ACCESS_USER_SECRET_ACCESS_KEY="${{ secrets.AWS_CODEARTIFACT_ACCESS_USER_SECRET_ACCESS_KEY }}" \
             --build-arg AWS_REGION="${{ secrets.AWS_REGION }}" \
+            --build-arg VERSION="${{ steps.find-next-version.outputs.version }}" \
             .
 
       - if: ${{ github.ref == inputs.production-ref }}
-        uses: cacommodities/gha-shared/bump-git-tag@master
-        id: bump-git-tag
+        uses: cacommodities/gha-shared/push-git-tag@master
+        id: push-git-tag
         with:
-          major-minor-version: ${{ inputs.major-minor-version }}
+          tag: ${{ steps.find-next-version.outputs.version }}
           tag-bump-git-user-name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
           tag-bump-git-user-email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
 
       - name: Push image
         if: ${{ github.ref == inputs.production-ref }}
         run: |
-          docker tag ${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_NAME }}:${{ steps.bump-git-tag.outputs.version }}
-          docker push ${{ env.IMAGE_NAME }}:${{ steps.bump-git-tag.outputs.version }}
+          docker tag ${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_NAME }}:${{ steps.find-next-version.outputs.version }}
+          docker push ${{ env.IMAGE_NAME }}:${{ steps.find-next-version.outputs.version }}
           docker push ${{ env.IMAGE_NAME }}:latest
 
       - name: Summary
         if: ${{ github.ref == inputs.production-ref }}
         run: |
-          echo "### New version: ${{ steps.bump-git-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "### New version: ${{ steps.find-next-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Slack notification
         if: ${{ success() || failure() }}
         uses: cacommodities/gha-shared/slack-notification@master
         with:
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          version: ${{ steps.bump-git-tag.outputs.version }}
+          version: ${{ steps.find-next-version.outputs.version }}
           status: ${{ job.status }}
