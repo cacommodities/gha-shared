@@ -9,7 +9,7 @@ inputs:
 outputs:
   version:
     description: "New version number after bumping. Corresponds to the tag."
-    value: ${{ steps.find-next-version.version }}
+    value: ${{ steps.find-next-version.outputs.version }}
 
 runs:
   using: "composite"
