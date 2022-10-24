@@ -43,8 +43,7 @@ jobs:
       - name: Test
         run: python3 -m unittest discover -s ./tests
 
-      - if: ${{ github.ref == inputs.production-ref }}
-        uses: cacommodities/gha-shared/find-next-version@master
+      - uses: cacommodities/gha-shared/find-next-version@master
         id: find-next-version
         with:
           major-minor-version: ${{ inputs.major-minor-version }}

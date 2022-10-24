@@ -47,8 +47,7 @@ jobs:
       - name: Create ECR repo if doesn't exist
         run: aws ecr create-repository --repository-name ${{ github.event.repository.name }} || true
 
-      - if: ${{ github.ref == inputs.production-ref }}
-        uses: cacommodities/gha-shared/find-next-version@master
+      - uses: cacommodities/gha-shared/find-next-version@master
         id: find-next-version
         with:
           major-minor-version: ${{ inputs.major-minor-version }}
