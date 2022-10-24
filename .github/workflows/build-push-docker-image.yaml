@@ -21,13 +21,17 @@ on:
         default: "refs/heads/master"
         required: false
         type: string
+      runs-on:
+        default: "self-hosted"
+        required: false
+        type: string
 
 env:
   IMAGE_NAME: ${{ secrets.CR_URL }}/${{ github.event.repository.name }}${{ inputs.image-suffix }}
 
 jobs:
   build-push-docker-image:
-    runs-on: [self-hosted, linux, x64]
+    runs-on: ${{ inputs.runs-on }}
     steps:
       - uses: actions/checkout@v3
         with:
