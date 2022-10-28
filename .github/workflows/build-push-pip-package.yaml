@@ -40,6 +40,10 @@ jobs:
         run: |
           aws codeartifact login --tool twine --repository ${{ secrets.CODEARTIFACT_REPO }} --domain ${{ secrets.CODEARTIFACT_DOMAIN }} --domain-owner ${{ secrets.CODEARTIFACT_DOMAIN_OWNER }} --region ${{ secrets.AWS_REGION }}
 
+      - name: Login to AWS CodeArtifact PIP
+        run: |
+          aws codeartifact login --tool pip --repository ${{ secrets.CODEARTIFACT_REPO }} --domain ${{ secrets.CODEARTIFACT_DOMAIN }} --domain-owner ${{ secrets.CODEARTIFACT_DOMAIN_OWNER }} --region ${{ secrets.AWS_REGION }}
+
       - name: Install requirements
         run: python3 -m pip install -r requirements.txt
 
