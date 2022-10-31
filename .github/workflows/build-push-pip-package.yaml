@@ -48,7 +48,7 @@ jobs:
         run: python3 -m pip install -r requirements.txt
 
       - name: Test
-        run: python3 -m unittest discover -s ./tests
+        run: "[-d \"tests\"] && python3 -m unittest discover -s ./tests"
 
       - uses: cacommodities/gha-shared/find-next-version@master
         id: find-next-version
