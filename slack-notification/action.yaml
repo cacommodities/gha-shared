@@ -99,6 +99,15 @@ runs:
                     "fields": [
                       {
                         "type": "mrkdwn",
+                        "text": "*Commit message:*\n${{ github.event.head_commit.message }}"
+                      },
+                    ]
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
                         "text": "*Name:*\n${{ github.event.repository.name }}"
                       },
                       {
