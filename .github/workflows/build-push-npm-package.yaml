@@ -1,0 +1,72 @@
+name: Build and Push NPM Package
+
+on:
+  workflow_call:
+    inputs:
+      major-minor-version:
+        description: "Major and minor version number, e.g. 1.2"
+        required: true
+        type: string
+      production-ref:
+        default: "refs/heads/master"
+        required: false
+        type: string
+
+jobs:
+  build-push-npm-package:
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-access-key-id: ${{ secrets.AWS_CODEARTIFACT_ACCESS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_CODEARTIFACT_ACCESS_USER_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to AWS CodeArtifact Twine
+        run: |
+          aws codeartifact login --tool npm --repository ${{ secrets.CODEARTIFACT_REPO }} --domain ${{ secrets.CODEARTIFACT_DOMAIN }} --domain-owner ${{ secrets.CODEARTIFACT_DOMAIN_OWNER }} --region ${{ secrets.AWS_REGION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - uses: cacommodities/gha-shared/find-next-version@master
+        id: find-next-version
+        with:
+          major-minor-version: ${{ inputs.major-minor-version }}
+
+      - name: Publish
+        if: ${{ github.ref == inputs.production-ref }}
+        run: |
+          BUILD_VERSION=${{ steps.find-next-version.outputs.version }}
+          npm version $BUILD_VERSION --no-git-tag-version
+          npm publish
+
+      - if: ${{ github.ref == inputs.production-ref }}
+        uses: cacommodities/gha-shared/push-git-tag@master
+        id: push-git-tag
+        with:
+          tag: ${{ steps.find-next-version.outputs.version }}
+          tag-bump-git-user-name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
+          tag-bump-git-user-email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
+
+      - name: Summary
+        if: ${{ github.ref == inputs.production-ref }}
+        run: |
+          echo "### New version: ${{ steps.find-next-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Slack notification
+        if: ${{ success() || failure() }}
+        uses: cacommodities/gha-shared/slack-notification@master
+        with:
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          version: ${{ steps.find-next-version.outputs.version }}
+          status: ${{ job.status }}
