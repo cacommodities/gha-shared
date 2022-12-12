@@ -31,9 +31,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_CODEARTIFACT_ACCESS_USER_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to AWS CodeArtifact Twine
-        run: |
-          aws codeartifact login --tool npm --repository ${{ secrets.CODEARTIFACT_REPO }} --domain ${{ secrets.CODEARTIFACT_DOMAIN }} --domain-owner ${{ secrets.CODEARTIFACT_DOMAIN_OWNER }} --region ${{ secrets.AWS_REGION }}
+      - name: Login to AWS CodeArtifact NPM
+        run: aws codeartifact login --tool npm --repository ${{ secrets.CODEARTIFACT_REPO }} --domain ${{ secrets.CODEARTIFACT_DOMAIN }} --domain-owner ${{ secrets.CODEARTIFACT_DOMAIN_OWNER }} --region ${{ secrets.AWS_REGION }}
 
       - name: Install dependencies
         run: npm ci
