@@ -13,7 +13,7 @@ on:
         type: string
 
 env:
-  LIBRARIAN_URL: "https://librarian-v2-http2.backends.local"
+  LIBRARIAN_URL: "librarian-v2.backend.svc.cluster.local:81"
 
 jobs:
   build-push-pip-package:
