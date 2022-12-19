@@ -25,6 +25,10 @@ on:
         default: "self-hosted"
         required: false
         type: string
+      build-extras:
+        default: ""
+        required: false
+        type: string
 
 env:
   IMAGE_NAME: ${{ secrets.CR_URL }}/${{ github.event.repository.name }}${{ inputs.image-suffix }}
@@ -67,6 +71,7 @@ jobs:
             --build-arg AWS_CODEARTIFACT_ACCESS_USER_SECRET_ACCESS_KEY="${{ secrets.AWS_CODEARTIFACT_ACCESS_USER_SECRET_ACCESS_KEY }}" \
             --build-arg AWS_REGION="${{ secrets.AWS_REGION }}" \
             --build-arg VERSION="${{ steps.find-next-version.outputs.version }}" \
+            ${{ inputs.build-extras }} \
             .
 
       - if: ${{ github.ref == inputs.production-ref }}
