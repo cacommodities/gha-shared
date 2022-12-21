@@ -14,6 +14,7 @@ on:
       librarian-url:
         required: false
         default: "librarian-v2.backend.svc.cluster.local:81"
+        type: string
 
 env:
   LIBRARIAN_URL: ${{ github.event.inputs.librarian-url }}
