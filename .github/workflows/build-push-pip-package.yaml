@@ -11,9 +11,12 @@ on:
         default: "refs/heads/master"
         required: false
         type: string
+      librarian-url:
+        required: false
+        default: "librarian-v2.backend.svc.cluster.local:81"
 
 env:
-  LIBRARIAN_URL: "librarian-v2.svc.backend.svc.cluster.local:81"
+  LIBRARIAN_URL: ${{ github.event.inputs.librarian-url }}
 
 jobs:
   build-push-pip-package:
@@ -87,3 +90,4 @@ jobs:
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           version: ${{ steps.find-next-version.outputs.version }}
           status: ${{ job.status }}
+
