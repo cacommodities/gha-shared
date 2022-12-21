@@ -11,13 +11,15 @@ on:
         default: "refs/heads/master"
         required: false
         type: string
-      librarian-url:
-        required: false
-        default: "librarian-v2.backend.svc.cluster.local:81"
-        type: string
+          #      librarian-url:
+          #        required: false
+          #        default: "librarian-v2.backend.svc.cluster.local:81"
+          #        type: string
 
 env:
-  LIBRARIAN_URL: ${{ github.event.inputs.librarian-url }}
+  # LIBRARIAN_URL: ${{ github.event.inputs.librarian-url }}
+  LIBRARIAN_URL: "librarian-v2.backend.svc.cluster.local:81"
+    
 
 jobs:
   build-push-pip-package:
