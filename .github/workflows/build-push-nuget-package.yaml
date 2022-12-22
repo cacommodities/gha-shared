@@ -7,6 +7,10 @@ on:
         description: "Path to the project to pack"
         required: true
         type: string
+      test-proj-path:
+        description: "Path to the test project to pack"
+        required: false
+        type: string
       tag-prefix:
         description: "Prefix to prepend to the tag which makes version bump independent."
         required: false
@@ -20,6 +24,10 @@ on:
         default: "refs/heads/master"
         required: false
         type: string
+      dotnet-version:
+        default: "7"
+        required: false
+        type: string
 
 jobs:
   build-push-nuget-package:
@@ -31,7 +39,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '6.0.302'
+          dotnet-version: ${{ inputs.dotnet-version }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
@@ -49,8 +57,9 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release ${{ inputs.proj-path }}
 
-      # - name: Test
-        # run: dotnet test --configuration Release --no-build
+      - name: Test
+        if: ${{ inputs.test-proj-path }}
+        run: dotnet test --configuration Release --no-build ${{ inputs.test-proj-path }}
 
       - uses: cacommodities/gha-shared/find-next-version@master
         id: find-next-version

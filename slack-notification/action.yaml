@@ -5,6 +5,9 @@ inputs:
   status:
     description: "Success or fail message"
     required: true
+  tag-prefix:
+    description: "Version of the software"
+    required: false
   version:
     description: "Version of the software"
     required: false
@@ -51,7 +54,7 @@ runs:
                     "fields": [
                       {
                         "type": "mrkdwn",
-                        "text": "*Name:*\n${{ github.event.repository.name }}"
+                        "text": "*Prefix:*\n${{ inputs.tag-prefix }}"
                       },
                       {
                         "type": "mrkdwn",
