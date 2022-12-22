@@ -47,10 +47,10 @@ jobs:
           aws codeartifact login --tool dotnet --repository ${{ secrets.CODEARTIFACT_REPO }} --domain ${{ secrets.CODEARTIFACT_DOMAIN }} --domain-owner ${{ secrets.CODEARTIFACT_DOMAIN_OWNER }} --region ${{ secrets.AWS_REGION }}
 
       - name: Build
-        run: dotnet build --configuration Release
+        run: dotnet build --configuration Release ${{ inputs.proj-path }}
 
-      - name: Test
-        run: dotnet test --configuration Release --no-build
+      # - name: Test
+        # run: dotnet test --configuration Release --no-build
 
       - uses: cacommodities/gha-shared/find-next-version@master
         id: find-next-version
