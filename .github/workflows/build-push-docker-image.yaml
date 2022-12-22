@@ -107,3 +107,4 @@ jobs:
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           version: ${{ steps.find-next-version.outputs.version }}
           status: ${{ job.status }}
+          tag-prefix: ${{ inputs.tag-prefix }}

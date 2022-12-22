@@ -11,15 +11,18 @@ on:
         default: "refs/heads/master"
         required: false
         type: string
-          #      librarian-url:
-          #        required: false
-          #        default: "librarian-v2.backend.svc.cluster.local:81"
-          #        type: string
+      librarian-url:
+        required: false
+        default: "librarian-v2.backend.svc.cluster.local:81"
+        type: string
+      tag-prefix:
+        description: "Prefix to prepend to the tag which makes version bump independent."
+        required: false
+        type: string
+        default: ""
 
 env:
-  # LIBRARIAN_URL: ${{ github.event.inputs.librarian-url }}
-  LIBRARIAN_URL: "librarian-v2.backend.svc.cluster.local:81"
-    
+  LIBRARIAN_URL: ${{ inputs.librarian-url }}
 
 jobs:
   build-push-pip-package:
@@ -63,6 +66,7 @@ jobs:
         id: find-next-version
         with:
           major-minor-version: ${{ inputs.major-minor-version }}
+          tag-prefix: ${{ inputs.tag-prefix }}
 
       - name: Build
         run: BUILD_VERSION= python3 setup.py sdist bdist_wheel
@@ -77,7 +81,7 @@ jobs:
         uses: cacommodities/gha-shared/push-git-tag@master
         id: push-git-tag
         with:
-          tag: ${{ steps.find-next-version.outputs.version }}
+          tag: "${{ inputs.tag-prefix }}${{ steps.find-next-version.outputs.version }}"
           tag-bump-git-user-name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
           tag-bump-git-user-email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
 
@@ -93,4 +97,4 @@ jobs:
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           version: ${{ steps.find-next-version.outputs.version }}
           status: ${{ job.status }}
-
+          tag-prefix: ${{ inputs.tag-prefix }}

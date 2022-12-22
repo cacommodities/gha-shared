@@ -11,6 +11,11 @@ on:
         default: "refs/heads/master"
         required: false
         type: string
+      tag-prefix:
+        description: "Prefix to prepend to the tag which makes version bump independent."
+        required: false
+        type: string
+        default: ""
 
 jobs:
   build-push-npm-package:
@@ -56,7 +61,7 @@ jobs:
         uses: cacommodities/gha-shared/push-git-tag@master
         id: push-git-tag
         with:
-          tag: ${{ steps.find-next-version.outputs.version }}
+          tag: "${{ inputs.tag-prefix }}${{ steps.find-next-version.outputs.version }}"
           tag-bump-git-user-name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
           tag-bump-git-user-email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
 
@@ -72,3 +77,4 @@ jobs:
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           version: ${{ steps.find-next-version.outputs.version }}
           status: ${{ job.status }}
+          tag-prefix: ${{ inputs.tag-prefix }}
