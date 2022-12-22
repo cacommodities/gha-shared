@@ -42,6 +42,7 @@ jobs:
 
       - name: Login to AWS CodeArtifact Nuget
         run: |
+          dotnet nuget list source --format detailed && \ # https://github.com/aws/aws-cli/issues/7328
           aws codeartifact login --tool dotnet --repository ${{ secrets.CODEARTIFACT_REPO }} --domain ${{ secrets.CODEARTIFACT_DOMAIN }} --domain-owner ${{ secrets.CODEARTIFACT_DOMAIN_OWNER }} --region ${{ secrets.AWS_REGION }}
 
       - name: Build
