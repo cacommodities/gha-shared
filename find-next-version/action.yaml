@@ -5,6 +5,9 @@ inputs:
   major-minor-version:
     description: "Major and minor version number, e.g. 1.2"
     required: true
+  tag-prefix:
+    required: false
+    default: ''
 
 outputs:
   version:
@@ -17,14 +20,14 @@ runs:
     - id: find-next-version
       shell: bash
       run: |
-        PREV_TAG=$(git describe --tags --abbrev=0 || echo "0.0.0")
-        PREV_MAJOR_MINOR_VERSION=$(echo $PREV_TAG | cut -d. -f1-2)
+        PREV_VERSION=$(git describe --tags --abbrev=0 --match "${{ inputs.tag-prefix }}*" | sed -e "s/^${{ inputs.tag-prefix }}//" || echo "0.0.0")
+        PREV_MAJOR_MINOR_VERSION=$(echo $PREV_VERSION  | cut -d. -f1-2)
         if [ "$PREV_MAJOR_MINOR_VERSION" != "${{ inputs.major-minor-version }}" ]; then
           echo "Major/Minor version changed, setting patch to 0"
           PATCH_VERSION='0'
         else
           echo "Bumping patch version"
-          PATCH_VERSION=`echo $PREV_TAG | awk -F. '{OFS="."; $NF+=1; print $NF}'`
+          PATCH_VERSION=`echo $PREV_VERSION | awk -F. '{OFS="."; $NF+=1; print $NF}'`
         fi
         VERSION="${{ inputs.major-minor-version }}.$PATCH_VERSION"
         echo "version=$VERSION" >> $GITHUB_OUTPUT

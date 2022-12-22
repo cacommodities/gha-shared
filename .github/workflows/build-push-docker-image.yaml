@@ -13,6 +13,11 @@ on:
         default: ""
         required: false
         type: string
+      tag-prefix:
+        description: "Prefix to prepend to the tag which makes version bump independent."
+        required: false
+        type: string
+        default: ""
       major-minor-version:
         description: "Major and minor version number, e.g. 1.2"
         required: true
@@ -59,6 +64,7 @@ jobs:
         id: find-next-version
         with:
           major-minor-version: ${{ inputs.major-minor-version }}
+          tag-prefix: ${{ inputs.tag-prefix }}
 
       - name: Build image
         run: |
@@ -78,7 +84,7 @@ jobs:
         uses: cacommodities/gha-shared/push-git-tag@master
         id: push-git-tag
         with:
-          tag: ${{ steps.find-next-version.outputs.version }}
+          tag: "${{ inputs.tag-prefix }}${{ steps.find-next-version.outputs.version }}"
           tag-bump-git-user-name: ${{ secrets.TAG_BUMP_GIT_USER_NAME }}
           tag-bump-git-user-email: ${{ secrets.TAG_BUMP_GIT_USER_EMAIL }}
 
