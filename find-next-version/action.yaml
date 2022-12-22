@@ -6,6 +6,7 @@ inputs:
     description: "Major and minor version number, e.g. 1.2"
     required: true
   tag-prefix:
+    description: "Only look for tags with this prefix."
     required: false
     default: ''
 
@@ -20,7 +21,7 @@ runs:
     - id: find-next-version
       shell: bash
       run: |
-        PREV_VERSION=$(git describe --tags --abbrev=0 --match "${{ inputs.tag-prefix }}*" | sed -e "s/^${{ inputs.tag-prefix }}//" || echo "0.0.0")
+        PREV_VERSION=$(git describe --tags --abbrev=0 --match "${{ inputs.tag-prefix }}*" --candidates 100 | sed -e "s/^${{ inputs.tag-prefix }}//" || echo "0.0.0")
         PREV_MAJOR_MINOR_VERSION=$(echo $PREV_VERSION  | cut -d. -f1-2)
         if [ "$PREV_MAJOR_MINOR_VERSION" != "${{ inputs.major-minor-version }}" ]; then
           echo "Major/Minor version changed, setting patch to 0"
